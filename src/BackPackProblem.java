@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+/**
+ * GG 너무 어렵다
+ */
+
 public class BackPackProblem {
     public static void main(String[] args) throws IOException
     {
@@ -14,6 +18,13 @@ public class BackPackProblem {
         StringTokenizer st = new StringTokenizer(firstLine, " ");
         int totalNumber = Integer.parseInt(st.nextToken());
         int maxWeight = Integer.parseInt(st.nextToken());
+        int[][] memo = new int[totalNumber][maxWeight];
+        for(int i = 0 ; i < totalNumber ; i++)
+        {
+            for(int j = 0; j < maxWeight; j++) {
+                memo[i][j] = -1;
+            }
+        }
         int[][] weightAndValue = new int[totalNumber][2];
         List<int[]> pq = new ArrayList<>();
         for(int i = 0; i < totalNumber; i++)
@@ -26,29 +37,24 @@ public class BackPackProblem {
         }
         pq = pq.stream().sorted((o1, o2)-> -o1[0] + o2[0]).collect(Collectors.toList());
         int maxValue = 0;
-        for(int weight = maxWeight; weight >= 0; weight--)
-        {
-            maxValue = findMaxValue(0, pq, weight, 0, maxValue);
-        }
+        maxValue = findMaxValue(0, pq, pq.get(0)[0], 0, maxValue, memo);
         System.out.println(maxValue);
     }
-    public static int findMaxValue(int start, List<int[]> pq, int presentWeight, int presentValue, int maxValue)
+    public static int findMaxValue(int start, List<int[]> pq, int presentWeight, int presentValue, int maxValue, int[][] memo)
     {
-        if(presentWeight == 0 && maxValue < presentValue) return presentValue;
+        if(presentWeight < pq.get(pq.size() - 1)[0] && maxValue < presentValue) {
+            return presentValue;
+        }
         for (int i = start; i < pq.size(); i++)
         {
-            boolean flag = false;
             if (presentWeight - pq.get(i)[0] >= 0)
             {
-                flag = true;
                 presentWeight -= pq.get(i)[0];
                 presentValue += pq.get(i)[1];
-                maxValue = findMaxValue(start + 1, pq, presentWeight, presentValue, maxValue);
+                maxValue = findMaxValue(start + 1, pq, presentWeight, presentValue, maxValue, memo);
             }
-            if(flag) {
-                presentWeight += pq.get(i)[0];
-                presentValue -= pq.get(i)[1];
-            }
+            presentWeight += pq.get(i)[0];
+            presentValue -= pq.get(i)[1];
         }
         return maxValue;
     }
