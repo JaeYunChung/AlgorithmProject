@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class relationAlgorithm {
     public static void main(String[] args) throws IOException {
@@ -9,45 +10,67 @@ public class relationAlgorithm {
         StringTokenizer st = new StringTokenizer(br.readLine(), " ");
         int numberOfVideo = Integer.parseInt(st.nextToken());
         int numberOfQuestion = Integer.parseInt(st.nextToken());
-        Map<Integer, Set<Map.Entry<Integer, Integer>>> relationMap = new HashMap<>();
+        Set<Node> nodeSet = new HashSet<>();
+        Deque<Node> queue = new ArrayDeque<>();
         for (int i = 0; i < numberOfVideo - 1; i++)
         {
             st = new StringTokenizer(br.readLine(), " ");
-            int key = Integer.parseInt(st.nextToken());
-            int value = Integer.parseInt(st.nextToken());
-            int distance = Integer.parseInt(st.nextToken());
-            relationMap.putIfAbsent(key, new HashSet<>());
-            relationMap.get(key).add(new AbstractMap.SimpleEntry<>(value, distance));
-            relationMap.putIfAbsent(value, new HashSet<>());
-            relationMap.get(value).add(new AbstractMap.SimpleEntry<>(key, distance));
+            int v1 = Integer.parseInt(st.nextToken());
+            int v2 = Integer.parseInt(st.nextToken());
+            int similarity = Integer.parseInt(st.nextToken());
+            nodeSet.add(new Node(v1, v2, similarity));
+            nodeSet.add(new Node(v2, v1, similarity));
         }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < numberOfQuestion; i++){
+            Set<Integer> find = new HashSet<>();
             st = new StringTokenizer(br.readLine(), " ");
             int limit = Integer.parseInt(st.nextToken());
-            int node = Integer.parseInt(st.nextToken());
-            Map<Integer, Integer> result = dfs(relationMap, Integer.MAX_VALUE, node, new HashMap<>());
-            result.remove(node);
-            int num = (int) result.values().stream().filter(each -> (each >= limit) ).count();
-            sb.append(num).append("\n");
+            int start = Integer.parseInt(st.nextToken());
+            queue.offer(new Node(start, start, Integer.MAX_VALUE));
+            int count = 0;
+            while(!queue.isEmpty())
+            {
+                Node entry = queue.poll();
+                find.add(entry.dest);
+                Set<Node> selectedSet = nodeSet.stream()
+                        .filter(node -> node.getVertex(entry.dest))
+                        .collect(Collectors.toSet());
+                for (Node e : selectedSet)
+                {
+                    if(find.contains(e.dest)) continue;
+                    Node newNode;
+                    if (entry.similarity < e.similarity)
+                    {
+                        newNode = new Node(start, e.dest, entry.similarity);
+                    }
+                    else newNode = new Node(start, e.dest, e.similarity);
+                    if(newNode.similarity >= limit) count++;
+                    queue.offer(newNode);
+                }
+            }
+            sb.append(count).append("\n");
         }
         System.out.println(sb);
     }
-    public static Map<Integer, Integer> dfs(Map<Integer, Set<Map.Entry<Integer, Integer>>> relationMap, int minValue, int key, Map<Integer, Integer> result)
+    public static class Node
     {
-        Set<Map.Entry<Integer, Integer>> linkedNode = relationMap.get(key);
-        for (Map.Entry<Integer, Integer> entry : linkedNode)
+        int src;
+        int dest;
+        int similarity;
+        public Node(int src, int dest, int similarity)
         {
-            if(result.containsKey(entry.getKey())) continue;
-            if (entry.getValue() < minValue) {
-                result.put(entry.getKey(), entry.getValue());
-                dfs(relationMap, entry.getValue(), entry.getKey(), result);
-            }
-            else {
-                result.put(entry.getKey(), minValue);
-                dfs(relationMap, minValue, entry.getKey(), result);
-            }
+            this.src = src;
+            this.dest = dest;
+            this.similarity = similarity;
         }
-        return result;
+        public boolean getVertex(int dest)
+        {
+            return this.src == dest;
+        }
+        public void setSimilarity(int similarity)
+        {
+            this.similarity = similarity;
+        }
     }
 }
