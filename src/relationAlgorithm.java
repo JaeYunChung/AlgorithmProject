@@ -10,7 +10,6 @@ public class relationAlgorithm {
         int numberOfVideo = Integer.parseInt(st.nextToken());
         int numberOfQuestion = Integer.parseInt(st.nextToken());
         Map<Integer, Set<Map.Entry<Integer, Integer>>> relationMap = new HashMap<>();
-        Map<Integer, Set<Map.Entry<Integer, Integer>>> resultMap = new HashMap<>();
         for (int i = 0; i < numberOfVideo - 1; i++)
         {
             st = new StringTokenizer(br.readLine(), " ");
@@ -22,46 +21,33 @@ public class relationAlgorithm {
             relationMap.putIfAbsent(value, new HashSet<>());
             relationMap.get(value).add(new AbstractMap.SimpleEntry<>(key, distance));
         }
-        for (int key : relationMap.keySet())
-        {
-            Deque<Map.Entry<Integer, Integer>> stack = new ArrayDeque<>();
-            Set<Map.Entry<Integer, Integer>> values = new HashSet<>();
-            Set<Integer> find = new HashSet<>();
-            find.add(key);
-            stack.push(new AbstractMap.SimpleEntry<>(key, Integer.MAX_VALUE));
-            while(!stack.isEmpty()) {
-                Map.Entry<Integer, Integer> entry = stack.pop();
-                find.add(entry.getKey());
-                Set<Map.Entry<Integer, Integer>> entrySet = relationMap.get(entry.getKey());
-                int value = entry.getValue();
-                for (Map.Entry<Integer, Integer> each : entrySet) {
-                    if(find.contains(each.getKey()))
-                    {
-                        continue;
-                    }
-                    if (value < each.getValue())
-                    {
-                        values.add(new AbstractMap.SimpleEntry<>(each.getKey(), value));
-                    }
-                    else values.add(each);
-                    stack.push(each);
-                }
-            }
-            resultMap.put(key, values);
-        }
-        for (int i = 0; i < numberOfQuestion; i++)
-        {
-            int count = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < numberOfQuestion; i++){
             st = new StringTokenizer(br.readLine(), " ");
             int limit = Integer.parseInt(st.nextToken());
             int node = Integer.parseInt(st.nextToken());
-            Set<Map.Entry<Integer, Integer>> entrySet = resultMap.get(node);
-            for(Map.Entry<Integer, Integer> entry : entrySet)
-            {
-                if(entry.getValue() >= limit) count++;
-            }
-            System.out.println(count);
+            Map<Integer, Integer> result = dfs(relationMap, Integer.MAX_VALUE, node, new HashMap<>());
+            result.remove(node);
+            int num = (int) result.values().stream().filter(each -> (each >= limit) ).count();
+            sb.append(num).append("\n");
         }
-
+        System.out.println(sb);
+    }
+    public static Map<Integer, Integer> dfs(Map<Integer, Set<Map.Entry<Integer, Integer>>> relationMap, int minValue, int key, Map<Integer, Integer> result)
+    {
+        Set<Map.Entry<Integer, Integer>> linkedNode = relationMap.get(key);
+        for (Map.Entry<Integer, Integer> entry : linkedNode)
+        {
+            if(result.containsKey(entry.getKey())) continue;
+            if (entry.getValue() < minValue) {
+                result.put(entry.getKey(), entry.getValue());
+                dfs(relationMap, entry.getValue(), entry.getKey(), result);
+            }
+            else {
+                result.put(entry.getKey(), minValue);
+                dfs(relationMap, minValue, entry.getKey(), result);
+            }
+        }
+        return result;
     }
 }
